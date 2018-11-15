@@ -1,11 +1,12 @@
 %this simulation is written according to the system diagram of "Trellis
 %coded Spatial modulation (2010), fig. [1]"
 %all the parameter values and block designs are according to the paper.
+%rng(1)
 %% transmitter side
 signal_size=2; %M-ary size in bits
 spatial_size=1; %size of spatial constellation points in bits
 
-seq_length=10002;
+seq_length=1002;
 seq=randombisequence(seq_length);
 
 [spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
@@ -33,27 +34,27 @@ mapped=sm_mapper(interlvd,modulated_signal,rate); %creating signal matrix for tr
 % mimo_channel.NumReceiveAntennas=1;
 mimo_channel=comm.MIMOChannel ;
 mimo_channel.TransmitCorrelationMatrix=eye(4);
-mimo_channel.ReceiveCorrelationMatrix=1;    %assuming uncorrelated antennas
+mimo_channel.ReceiveCorrelationMatrix=eye(4);    %assuming uncorrelated antennas
 mimo_channel.FadingDistribution='Rician';%fading constant K=3 (default)
 
 %channel model fading technique is filtered gaussian noise(default)
 %Average path gain is 0 (default)
 %Normalize path gain (default)
 
-transmitted_signal=mimo_channel(mapped');
-
-sigma=1/10;% SNR=1/sigma in this case
-received_signal=transmitted_signal+sigma*randn(length(transmitted_signal),1);% introduce noise
+transmitted_signal=mimo_channel(mapped.');
+SNR=10;
+sigma=1;% SNR=1/sigma in this case
+received_signal=SNR*transmitted_signal+sigma*randn(size(transmitted_signal));% introduce noise
 %% All possible vectors to receive
 encoded_seq_ref=[0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1];
 signal_cons_ref=[0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1];
 modulated_signal_ref=modulator_qam(signal_cons_ref,signal_size);
 
 mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate);
-transmitted_signal_ref=mimo_channel(mapped_ref');
+transmitted_signal_ref=mimo_channel(mapped_ref.');
 
 %% Receiver Side
-[re_coded_spat, re_signal_cons]=sm_decoder(received_signal,sigma,...
+[re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
     transmitted_signal_ref,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,rate);
 
 deinterlvd_seq=randdeintrlv(re_coded_spat,interlvr_depth);
@@ -67,3 +68,5 @@ recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
 
 %% bit-error check
 error_rate=biterr(recovered_seq,seq')/seq_length;
+error_rate_spatial=biterr(decoded_seq,spatial_cons)/length(spatial_cons);
+error_rate_signal=biterr(re_signal_cons,signal_cons)/length(signal_cons);
