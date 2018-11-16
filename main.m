@@ -3,23 +3,13 @@
 %all the parameter values and block designs are according to the paper.
 %rng(1)
 
-%% Channel
-% mimo_channel.NumTransmitAntennas=4;
-% mimo_channel.NumReceiveAntennas=1;
-mimo_channel=comm.MIMOChannel ;
-mimo_channel.TransmitCorrelationMatrix=eye(4);
-mimo_channel.ReceiveCorrelationMatrix=eye(4);    %assuming uncorrelated antennas
-mimo_channel.FadingDistribution='Rician';%fading constant K=3 (default)
-
-%channel model fading technique is filtered gaussian noise(default)
-%Average path gain is 0 (default)
-%Normalize path gain (default)
-
 %% transmitter side
+tx=4; %transmitting antenna number
+rx=4; %receiving antenna number
 signal_size=2; %M-ary size in bits
 spatial_size=1; %size of spatial constellation points in bits
 
-seq_length=1002;
+seq_length=1000002;
 seq=randombisequence(seq_length);
 
 [spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
@@ -41,21 +31,18 @@ modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on
 mapped=sm_mapper(interlvd,modulated_signal,rate); %creating signal matrix for transmitting antennas
 %each column representing the i-th symbol to transmit and each row the
 %number of antenna
+H=channel_matrix(tx,rx,'Rician',3);
 
-
-transmitted_signal=mimo_channel(mapped.');
-transmitted_signal=transmitted_signal.';
-SNR=1;
-sigma=0;% SNR=1/sigma in this case
-received_signal=SNR*transmitted_signal+sigma*randn(size(transmitted_signal));% introduce noise
+SNR=4;% sqrt of SNR
+sigma=1;% std of noise
+received_signal=SNR*H*mapped+sigma*(randn(size(mapped))+randn(size(mapped))*1i);% introduce noise
 %% All possible vectors to receive
 encoded_seq_ref=[0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1];
 signal_cons_ref=[0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1];
 modulated_signal_ref=modulator_qam(signal_cons_ref,signal_size);
 
 mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate);
-transmitted_signal_ref=mimo_channel(mapped_ref.');
-transmitted_signal_ref=transmitted_signal_ref.';
+transmitted_signal_ref=H*mapped_ref;
 %% Receiver Side
 [re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
     transmitted_signal_ref,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,rate);
