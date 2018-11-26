@@ -5,7 +5,7 @@
 function bf_rx_codeword = bit_flipping_decoder(rx_codeword, h)
 
 %Static variable definition.
-lmax = 1000; %Maximum number of iterations.
+lmax = 100; %Maximum number of iterations.
 T = 0; %Treshold for the termination condition.
 
 %Auxiliar variables.
