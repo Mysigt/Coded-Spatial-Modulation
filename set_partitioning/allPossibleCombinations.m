@@ -1,7 +1,7 @@
-function C_tp=allPossibleCombinations(antennas, max_set_size)
+function C_tp=allPossibleCombinations(antennas, max_set_size,min_set_size)
     C_tp={};
     
-    for i=1:max_set_size
+    for i=min_set_size:max_set_size
         C=nchoosek(antennas,i);
         
         for j=1:size(C,1)

@@ -17,5 +17,6 @@ function Cost=euclideandistsum(set,C_st)
             Cost=Cost+norm(V);
             end
         end
+        Cost=Cost/(i*k);
     end
 end
