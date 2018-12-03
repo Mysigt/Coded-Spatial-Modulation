@@ -1,7 +1,7 @@
 %this simulation is written according to the system diagram of "Trellis
 %coded Spatial modulation (2010), fig. [1]"
 %all the parameter values and block designs are according to the paper.
-%rng(1)
+% %rng(1)
 % for ro=0:1:20
 %     for kk=1:10
 %% transmitter side
@@ -10,10 +10,17 @@ rx=4; %receiving antenna number
 signal_size=2; %M-ary size in bits
 spatial_size=1; %size of spatial constellation points in bits
 
+antennas=['A'; 'B' ;'C'; 'D']; 
+
 seq_length=1000002;
 seq=randombisequence(seq_length);
 
+H_ch=channel_matrix(tx,rx,'Rician',3);
+
 [spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
+
+opt_set=set_partitioning_opt(H_ch,antennas);
+b_m=bit_mapping(opt_set);
 
 %for a rate 1/2 feedforward convolutional encoder
 %octal representation of (5,7)
@@ -29,14 +36,10 @@ interlvd=randintrlv(encoded_seq,interlvr_depth);    %random block interleaver
 
 modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on signal constellation size, in this case 4- QAM
 
-mapped=sm_mapper(interlvd,modulated_signal,rate,spatial_size); %creating signal matrix for transmitting antennas
+mapped=sm_mapper(interlvd,modulated_signal,rate,spatial_size,b_m); %creating signal matrix for transmitting antennas
 %each column representing the i-th symbol to transmit and each row the
 %number of antenna
-H=channel_matrix(tx,rx,'Rayleigh',3);
-b_m={ 'A', [ 0 0];
-      'B', [ 0 1];
-      'C', [ 1 0];
-      'D', [ 1 1]};
+
 
 SNR=sqrt(10^(ro*0.1));% sqrt of SNR
 sigma=1;% std of noise
@@ -46,7 +49,7 @@ encoded_seq_ref=[0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1
 signal_cons_ref=[0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1];
 modulated_signal_ref=modulator_qam(signal_cons_ref,signal_size);
 
-mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate,spatial_size,b_m);
+mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate,spatial_size);
 transmitted_signal_ref=H*mapped_ref;
 %% Receiver Side
 [re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
@@ -61,12 +64,12 @@ decoded_seq=vitdec(deinterlvd_seq,trellis_structure, tblen,'trunc', 'hard');
 
 recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
 
- %% bit-error check
+% %% bit-error check
 % error_rate(ro+1,kk)=biterr(recovered_seq,seq')/seq_length;
 % error_rate_spatial(ro+1,kk)=biterr(decoded_seq,spatial_cons)/length(spatial_cons);
 % error_rate_signal(ro+1,kk)=biterr(re_signal_cons,signal_cons)/length(signal_cons);
 %     end
 % end
 % error_rate_avg=mean(error_rate,2);
-% %plot
-% %semilogy([1:20],error_rate_avg)
+%plot
+%semilogy([1:20],error_rate_avg)
