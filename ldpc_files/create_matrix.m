@@ -1,3 +1,5 @@
+%Function to create the parity check matrix based on the given code.
+
 function h = create_matrix(filename)
 
 fileid = fopen(filename);
@@ -14,9 +16,9 @@ h = zeros(M,N);
 wr = A(3);
 
 %Numbber of 1's in a column.
-wc = A(4);
+%wc = A(4);
 
-%Fills the table.
+%Fills the matrix.
 
 begin = M + N + 5; %Begining of reading the file vector A.
 
@@ -27,20 +29,26 @@ j = 0;
 
 for i = begin:finish
     
-   column = A(i);
-   
-   h(row, column) = 1;
+    if A(i) ~= 0
+        
+        column = A(i);
+        
+        h(row, column) = 1;
+        
+    end
     
-   j = j + 1;
-   
-   if j == wr
-       
-       row = row + 1;
-       j = 0;
-       
-   end
-   
+    j = j + 1;
+    
+    if j == wr
+        
+        row = row + 1;
+        j = 0;
+        
+    end
+    
 end
+
+h = h';
 
 end
 
