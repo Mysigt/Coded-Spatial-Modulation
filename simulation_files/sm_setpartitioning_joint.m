@@ -11,17 +11,26 @@ signal_size=2; %M-ary size in bits
 spatial_size=1; %size of spatial constellation points in bits
 
 antennas=['A'; 'B' ;'C'; 'D']; 
-
-seq_length=1000002;
-seq=randombisequence(seq_length);
+all_symbols=[65:65+15]';
+all_symbols=char(all_symbols);
 
 H_ch=channel_matrix(tx,rx,'Rician',3);
 
-[spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
+%% All possible vectors to receive
+[phys_response,encoded_seq_ref,signal_cons_ref]=ref_const(H_ch,tx,signal_size);
 
-opt_tree=set_partitioning_tree(H_ch,antennas);
+%set partitioning and bit mapping
+
+opt_tree=set_partitioning_tree(phys_response,all_symbols);
 
 b_m=bit_mapping(opt_tree);
+
+%%
+seq_length=1000002;
+seq=randombisequence(seq_length);
+
+[spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
+
 
 %for a rate 1/2 feedforward convolutional encoder
 %octal representation of (5,7)
@@ -45,16 +54,10 @@ mapped=sm_mapper(interlvd,modulated_signal,rate,spatial_size,b_m); %creating sig
 SNR=sqrt(10^(ro*0.1));% sqrt of SNR
 sigma=1;% std of noise
 received_signal=SNR*H_ch*mapped+sigma*(randn(size(mapped))+randn(size(mapped))*1i);% introduce noise
-%% All possible vectors to receive
-encoded_seq_ref=[0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1];
-signal_cons_ref=[0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1];
-modulated_signal_ref=modulator_qam(signal_cons_ref,signal_size);
 
-mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate,spatial_size,b_m);
-transmitted_signal_ref=H_ch*mapped_ref;
 %% Receiver Side
 [re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
-    transmitted_signal_ref,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,rate);
+    phys_response,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,rate);
 
 deinterlvd_seq=randdeintrlv(re_coded_spat,interlvr_depth);
 
