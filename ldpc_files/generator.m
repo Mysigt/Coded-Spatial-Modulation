@@ -5,10 +5,24 @@
 
 function codeword  = generator(incoming, c)
     
-    %Converts to decimal.
-    incoming_decimal = bi2de(incoming);
+    %Linear independent set.
+    c = g2rref(c);
     
-    %Indexes the codeword table.
-    codeword = c(incoming_decimal, :);
+    %Determines codeword size.
+    codeword_size = size(c, 2);
+    
+    %Initializes the codeword;
+    codeword = zeros(1, codeword_size);
+    
+    
+    %Which lines to add.
+        index = find(incoming);
+        
+    for i = index
+        
+        codeword = xor(c(i,:), codeword); 
+        
+    end
+
     
 end
