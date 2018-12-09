@@ -30,7 +30,7 @@ spatial_size=1; %size of spatial constellation points in bits
 
 antennas=['A'; 'B' ;'C'; 'D']; 
 
-seq_length1=seq_length(j);
+seq_length=seq_length(j);
 seq=seq_cluster{j};
 
 H_ch=channel_cluster{j,kk};
@@ -55,7 +55,7 @@ interlvd=randintrlv(encoded_seq,interlvr_depth);    %random block interleaver
 
 modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on signal constellation size, in this case 4- QAM
 
-mapped=sm_mapper(interlvd,modulated_signal,tx,b_m); %creating signal matrix for transmitting antennas
+mapped=sm_mapper(interlvd,modulated_signal,rate,spatial_size,b_m); %creating signal matrix for transmitting antennas
 %each column representing the i-th symbol to transmit and each row the
 %number of antenna
 
@@ -68,7 +68,7 @@ encoded_seq_ref=[0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1
 signal_cons_ref=[0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1];
 modulated_signal_ref=modulator_qam(signal_cons_ref,signal_size);
 
-mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,tx,b_m);
+mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,rate,spatial_size,b_m);
 transmitted_signal_ref=H_ch*mapped_ref;
 %% Receiver Side
 [re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
@@ -94,4 +94,3 @@ recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
 % error_rate_avg=mean(error_rate,2);
 %plot
 %semilogy([1:20],error_rate_avg)
-%semilogy([0:2:16], error_rate)

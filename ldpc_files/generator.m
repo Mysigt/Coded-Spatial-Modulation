@@ -1,14 +1,28 @@
 %Look up table.
-%Input: incoming bit sequence(incoming), look-up table (lu_table).
+%Input: incoming bit sequence(incoming), codewords table generated using
+%codewords function (c).
 %Output: encoded bit sequence (codeword).
 
-function codeword  = generator(incoming, lu_table)
-  
-    %Determines the index.
-    index = bi2de(incoming);
-    index = index + 1;
+function codeword  = generator(incoming, c)
     
-    %Generates the codeword.
-    codeword = lu_table(index, :);
+    %Linear independent set.
+    c = g2rref(c);
+    
+    %Determines codeword size.
+    codeword_size = size(c, 2);
+    
+    %Initializes the codeword;
+    codeword = zeros(1, codeword_size);
+    
+    
+    %Which lines to add.
+        index = find(incoming);
+        
+    for i = index
+        
+        codeword = xor(c(i,:), codeword); 
+        
+    end
+
     
 end

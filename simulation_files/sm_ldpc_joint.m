@@ -19,22 +19,18 @@
 %    0 0 0 0 1 0 0 0 1 1];
  %%
 % n=20;
-% k=10;
+% k=15;
 % rate=k/n;
-% A=[1 1 0 0 0 0 0 0 0 0; 
-%    0 0 1 1 0 0 0 0 0 0; 
-%    0 0 0 0 1 1 0 0 0 0; 
-%    0 0 0 0 0 0 1 1 0 0;
-%    0 0 0 0 0 0 0 0 1 1; 
-%    1 0 0 0 1 0 0 0 1 0; 
-%    0 1 0 0 0 1 0 0 0 1; 
-%    0 0 1 0 0 0 1 0 0 0; 
-%    0 0 0 1 0 0 0 0 0 0;
-%    0 0 0 0 0 0 0 1 0 0]; 
+% A=[1 1 1 0 1 0 0 1 0 0 0 1 0 0 0; 
+%    1 0 0 1 1 1 0 0 1 0 0 0 1 0 0; 
+%    0 1 0 0 0 0 1 1 1 0 1 0 0 1 0; 
+%    0 0 1 0 0 1 0 0 0 1 1 1 0 0 1;
+%    0 0 0 1 0 0 1 0 0 1 0 0 1 1 1]; 
+%   
 % 
 % H=cat(2,A,eye(size(A,1)));
 % G=cat(2,eye(size(A,2)),A');
-% %%
+% % %%
 % kk_value=[10 10 10 10 50 50 50 100 100];
 % seq_length=[1020 1020 1020 1020 1020 10020 100020 1000020 1000020];
 % seq_cluster={};
@@ -54,7 +50,7 @@
 %%
 %parpool(6)
 
-parfor j=9
+parfor j=1:9
     ro=(j-1)*2;
     bit_error_count=0;
     for kk=1:kk_value(j)
@@ -62,12 +58,16 @@ parfor j=9
 tx=4; %transmitting antenna number
 rx=4; %receiving antenna number
 signal_size=2; %M-ary size in bits
-spatial_size=1; %size of spatial constellation points in bits
+spatial_size=2; %size of spatial constellation points in bits
 
 seq_length1=seq_length(j);
 seq=seq_cluster{j};
+encoded_seq = encode(seq,n,k,'linear/binary',G);
 
-[spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
+interlvr_depth=1000;
+interlvd=randintrlv(encoded_seq,interlvr_depth); 
+
+[spatial_cons,signal_cons]=splitter(interlvd,spatial_size,signal_size);
 
 %for a rate 1/2 feedforward convolutional encoder
 %octal representation of (5,7)
@@ -78,14 +78,12 @@ seq=seq_cluster{j};
 % trellis_structure=poly2trellis(constraint_length, octal_rep);
 % encoded_seq=convenc(spatial_cons,trellis_structure);
 
-encoded_seq = encode(spatial_cons,n,k,'linear/binary',G);
 
-interlvr_depth=1000;
-interlvd=randintrlv(encoded_seq,interlvr_depth);    %random block interleaver
+   %random block interleaver
 
 modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on signal constellation size, in this case 4- QAM
 
-mapped=sm_mapper(interlvd,modulated_signal,tx,b_m); %creating signal matrix for transmitting antennas
+mapped=sm_mapper(spatial_cons,modulated_signal,tx,b_m); %creating signal matrix for transmitting antennas
 %each column representing the i-th symbol to transmit and each row the
 %number of antenna
 H_ch=channel_cluster{j,kk};
@@ -101,9 +99,11 @@ mapped_ref=sm_mapper(encoded_seq_ref,modulated_signal_ref,tx,b_m);
 transmitted_signal_ref=H_ch*mapped_ref;
 %% Receiver Side
 [re_coded_spat, re_signal_cons]=sm_decoder(received_signal,SNR,...
-    transmitted_signal_ref,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,rate);
+    transmitted_signal_ref,encoded_seq_ref,signal_cons_ref,signal_size,spatial_size,1);
 
-deinterlvd_seq=randdeintrlv(re_coded_spat,interlvr_depth);
+re_coded_seq=jointer(re_coded_spat,re_signal_cons,spatial_size,signal_size);
+
+deinterlvd_seq=randdeintrlv(re_coded_seq,interlvr_depth);
 
 % tblen=15; % a typical value for traceback depth is about 5 times the constraint length of the code
 % decoded_seq=vitdec(deinterlvd_seq,trellis_structure, tblen,'trunc', 'hard');
@@ -112,8 +112,7 @@ bfd=bit_flipping_decoder(deinterlvd_seq,H);
 
 %demodulated_signal=demodulator_qam(re_signal_cons,signal_size);
 decoded_seq= decode(bfd,n,k,'linear/binary',G);
-recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
-
+recovered_seq=decoded_seq;
 %% bit-error check
 % error_rate(j,kk)=biterr(recovered_seq,seq')/seq_length(j);
 % error_rate_spatial(j,kk)=biterr(decoded_seq,spatial_cons)/length(spatial_cons);
@@ -126,4 +125,4 @@ end
 %error_rate_avg=mean(error_rate,2);
 %plot
 %semilogy([0:8],error_rate_avg)
-semilogy([0:2:16], error_rate)
+%semilogy([0:2:16], error_rate)

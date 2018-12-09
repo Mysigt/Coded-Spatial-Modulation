@@ -2,32 +2,55 @@
 %coded Spatial modulation (2010), fig. [1]"
 %all the parameter values and block designs are according to the paper.
 % %rng(1)
-% for ro=0:1:20
-%     for kk=1:10
+% tx=4; %transmitting antenna number
+% rx=4; %receiving antenna number
+% signal_size=2; %M-ary size in bits
+% spatial_size=1; %size of spatial constellation points in bits
+% 
+% antennas=['A'; 'B' ;'C'; 'D']; 
+% all_symbols=[65:65+15]';
+% all_symbols=char(all_symbols);
+% 
+% error_rate=zeros(1,9);
+% %%
+% kk_value=[10 10 10 10 50 50 50 100 100];
+% seq_length=[1020 1020 1020 1020 1020 10020 100020 1000020 1000020];
+% seq_cluster={};
+% for i=1:length(seq_length)
+% seq_cluster{i}=randombisequence(seq_length(i));
+% end
+% %%
+% channel_cluster={};
+% for i=1:length(kk_value)
+%     for j=1:kk_value(i)
+%         H_dummy=channel_matrix(tx,rx,'Rician',3);
+%         channel_cluster(i,j)={H_dummy};
+%     end
+% end
+%%
+% parpool(6)
+ parfor j=1:9
+     ro=(j-1)*2;
+     bit_error_count=0;
+     for kk=1:kk_value(j)
 %% transmitter side
-tx=4; %transmitting antenna number
-rx=4; %receiving antenna number
-signal_size=2; %M-ary size in bits
-spatial_size=1; %size of spatial constellation points in bits
 
-antennas=['A'; 'B' ;'C'; 'D']; 
-all_symbols=[65:65+15]';
-all_symbols=char(all_symbols);
+seq_length1=seq_length(j);
+seq=seq_cluster{j};
 
-H_ch=channel_matrix(tx,rx,'Rician',3);
-
+H_ch=channel_cluster{j,kk};
 %% All possible vectors to receive
-[phys_response,encoded_seq_ref,signal_cons_ref]=ref_const(H_ch,tx,signal_size);
+[phys_response,~,~]=ref_const(H_ch,tx,signal_size);
 
 %set partitioning and bit mapping
 
 opt_tree=set_partitioning_tree(phys_response,all_symbols);
 
 b_m=bit_mapping(opt_tree);
-
 %%
-seq_length=1000002;
-seq=randombisequence(seq_length);
+ [phys_response,encoded_seq_ref,signal_cons_ref]=ref_const_joint(H_ch,tx,signal_size,b_m);
+  
+%%
 
 [spatial_cons,signal_cons]=splitter(seq,spatial_size,signal_size);
 
@@ -44,9 +67,9 @@ encoded_seq=convenc(spatial_cons,trellis_structure);
 interlvr_depth=1000;
 interlvd=randintrlv(encoded_seq,interlvr_depth);    %random block interleaver
 
-modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on signal constellation size, in this case 4- QAM
+%modulated_signal=modulator_qam(signal_cons,signal_size); %modulator depending on signal constellation size, in this case 4- QAM
 
-mapped=sm_mapper(interlvd,modulated_signal,rate,spatial_size,b_m); %creating signal matrix for transmitting antennas
+mapped=sm_mapper_joint(interlvd,signal_cons,tx,signal_size,b_m); %creating signal matrix for transmitting antennas
 %each column representing the i-th symbol to transmit and each row the
 %number of antenna
 
@@ -67,13 +90,16 @@ decoded_seq=vitdec(deinterlvd_seq,trellis_structure, tblen,'trunc', 'hard');
 %demodulated_signal=demodulator_qam(re_signal_cons,signal_size);
 
 recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
-biterr(recovered_seq,seq')/seq_length
+ bit_error_count=bit_error_count+biterr(recovered_seq,seq')/seq_length1;
+ 
 % %% bit-error check
 % error_rate(ro+1,kk)=biterr(recovered_seq,seq')/seq_length;
 % error_rate_spatial(ro+1,kk)=biterr(decoded_seq,spatial_cons)/length(spatial_cons);
 % error_rate_signal(ro+1,kk)=biterr(re_signal_cons,signal_cons)/length(signal_cons);
-%     end
-% end
+     end
+     error_rate(j)=bit_error_count/kk_value(j);
+ end
 % error_rate_avg=mean(error_rate,2);
 %plot
 %semilogy([1:20],error_rate_avg)
+%semilogy([0:2:16], error_rate)

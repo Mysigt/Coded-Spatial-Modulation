@@ -2,7 +2,7 @@
 %Input: Received codeword after hard decoding (rx_codeword); Parity check
 %matrix (h)
 
-function bfd = bit_flipping_decoder(deinterlvd_seq, h)
+function bf_rx_codeword = bit_flipping_decoder(rx_codeword, h)
 %Determines size of h.
 [~, N] = size(h);
 
@@ -55,6 +55,5 @@ else
     end
 end
     
-    bfd((i-1)*N+1:i*N)= v;
-end
+    bf_rx_codeword = v;
 end 
