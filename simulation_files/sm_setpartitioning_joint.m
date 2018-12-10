@@ -29,7 +29,7 @@
 % end
 %%
 % parpool(6)
- parfor j=1:9
+ parfor j=8:8
      ro=(j-1)*2;
      bit_error_count=0;
      for kk=1:kk_value(j)

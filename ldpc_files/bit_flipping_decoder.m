@@ -8,7 +8,7 @@ function bfd = bit_flipping_decoder(deinterlvd_seq, h)
 
 %Static variable definition.
 lmax = 20; %Maximum number of iterations.
-T = 0; %Treshold for the termination condition.
+T = 1; %Treshold for the termination condition.
 
 for i=1:length(deinterlvd_seq)/N
     rx_codeword=deinterlvd_seq((i-1)*N+1:i*N);

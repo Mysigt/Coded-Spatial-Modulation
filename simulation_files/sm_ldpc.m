@@ -2,22 +2,12 @@
 %coded Spatial modulation (2010), fig. [1]"
 %all the parameter values and block designs are according to the paper.
 %rng(1)
-% n=10;
-% k=5;
-% rate=k/n;
-% H=[0 1 0 0 1 1 0 0 0 1 ; ...
-%    1 0 0 1 0 1 1 0 0 0 ; ...
-%    0 1 1 0 0 0 1 1 0 0 ; ...
-%    0 0 0 1 1 0 0 1 1 0 ; ...
-%    1 0 1 0 0 0 0 0 1 1 ];
+% tx=4; %transmitting antenna number
+% rx=4; %receiving antenna number
+% signal_size=2; %M-ary size in bits
+% spatial_size=1; %size of spatial constellation points in bits
 % 
-% 
-% G=[1 0 0 0 0 1 0 0 0 1; ...
-%    0 1 0 0 0 1 1 0 0 0; ...
-%    0 0 1 0 0 0 0 1 1 0; ...
-%    0 0 0 1 0 0 1 1 0 0; ...
-%    0 0 0 0 1 0 0 0 1 1];
- %%
+
 % n=20;
 % k=10;
 % rate=k/n;
@@ -52,17 +42,13 @@
 % %%
 % b_m=['A' 'A'; 'B' 'B'; 'C' 'C'; 'D' 'D'];
 %%
-%parpool(6)
+%parpool(2)
 
-parfor j=9
+parfor j=1:6
     ro=(j-1)*2;
     bit_error_count=0;
     for kk=1:kk_value(j)
 %% transmitter side
-tx=4; %transmitting antenna number
-rx=4; %receiving antenna number
-signal_size=2; %M-ary size in bits
-spatial_size=1; %size of spatial constellation points in bits
 
 seq_length1=seq_length(j);
 seq=seq_cluster{j};
@@ -126,4 +112,4 @@ end
 %error_rate_avg=mean(error_rate,2);
 %plot
 %semilogy([0:8],error_rate_avg)
-semilogy([0:2:16], error_rate)
+semilogy([0:2:10], error_rate)
