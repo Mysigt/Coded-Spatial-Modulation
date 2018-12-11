@@ -2,34 +2,34 @@
 %coded Spatial modulation (2010), fig. [1]"
 %all the parameter values and block designs are according to the paper.
 % %rng(1)
-% tx=4; %transmitting antenna number
-% rx=4; %receiving antenna number
-% signal_size=2; %M-ary size in bits
-% spatial_size=1; %size of spatial constellation points in bits
-% 
-% antennas=['A'; 'B' ;'C'; 'D']; 
-% all_symbols=[65:65+15]';
-% all_symbols=char(all_symbols);
-% 
-% error_rate=zeros(1,9);
-% %%
-% kk_value=[10 10 10 10 50 50 50 100 100];
-% seq_length=[1020 1020 1020 1020 1020 10020 100020 1000020 1000020];
-% seq_cluster={};
-% for i=1:length(seq_length)
-% seq_cluster{i}=randombisequence(seq_length(i));
-% end
-% %%
-% channel_cluster={};
-% for i=1:length(kk_value)
-%     for j=1:kk_value(i)
-%         H_dummy=channel_matrix(tx,rx,'Rician',3);
-%         channel_cluster(i,j)={H_dummy};
-%     end
-% end
+tx=4; %transmitting antenna number
+rx=4; %receiving antenna number
+signal_size=2; %M-ary size in bits
+spatial_size=1; %size of spatial constellation points in bits
+
+antennas=['A'; 'B' ;'C'; 'D']; 
+all_symbols=[65:65+15]';
+all_symbols=char(all_symbols);
+
+error_rate=zeros(1,9);
+%%
+kk_value=[100 100 100 100 100 100 100 100 100];
+seq_length=[1020 1020 1020 1020 1020 10020 100020 1000020 1000020];
+seq_cluster={};
+for i=1:length(seq_length)
+seq_cluster{i}=randombisequence(seq_length(i));
+end
+%%
+channel_cluster={};
+for i=1:length(kk_value)
+    for j=1:kk_value(i)
+        H_dummy=channel_matrix(tx,rx,'Rayleigh',3);
+        channel_cluster(i,j)={H_dummy};
+    end
+end
 %%
 % parpool(6)
- parfor j=8:8
+ parfor j=1:9
      ro=(j-1)*2;
      bit_error_count=0;
      for kk=1:kk_value(j)
@@ -87,8 +87,6 @@ deinterlvd_seq=randdeintrlv(re_coded_spat,interlvr_depth);
 tblen=15; % a typical value for traceback depth is about 5 times the constraint length of the code
 decoded_seq=vitdec(deinterlvd_seq,trellis_structure, tblen,'trunc', 'hard');
 
-%demodulated_signal=demodulator_qam(re_signal_cons,signal_size);
-
 recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
  bit_error_count=bit_error_count+biterr(recovered_seq,seq')/seq_length1;
  
@@ -99,7 +97,5 @@ recovered_seq=jointer(decoded_seq,re_signal_cons,spatial_size,signal_size);
      end
      error_rate(j)=bit_error_count/kk_value(j);
  end
-% error_rate_avg=mean(error_rate,2);
 %plot
-%semilogy([1:20],error_rate_avg)
-%semilogy([0:2:16], error_rate)
+%semilogy([0:2:10], error_rate(1:6))

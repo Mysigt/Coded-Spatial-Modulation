@@ -27,7 +27,7 @@ A=[1 1 1 0 1 0 0 1 0 0 0 1 0 0 0;
 H=cat(2,A,eye(size(A,1)));
 G=cat(2,eye(size(A,2)),A');
 %%
-kk_value=[10 10 10 10 50 50 50 100 100];
+kk_value=[100 100 100 100 100 100 100 100 100];
 seq_length=[1020 1020 1020 1020 1020 10020 100020 1000020 1000020];
 seq_cluster={};
 for i=1:length(seq_length)
@@ -45,11 +45,16 @@ end
 %%
 %parpool(2)
 
-parfor j=1:6
+parfor j=1:9
     ro=(j-1)*2;
     bit_error_count=0;
     for kk=1:kk_value(j)
 %% transmitter side
+H_ch=channel_cluster{j,kk};
+
+opt_tree=set_partitioning_tree(H_ch,antennas);
+
+b_m=bit_mapping(opt_tree);
 
 seq_length1=seq_length(j);
 seq=seq_cluster{j};
@@ -98,11 +103,11 @@ deinterlvd_sig=randdeintrlv(re_signal_cons,interlvr_depth);
 % tblen=15; % a typical value for traceback depth is about 5 times the constraint length of the code
 % decoded_seq=vitdec(deinterlvd_seq,trellis_structure, tblen,'trunc', 'hard');
 
-%bfd=bit_flipping_decoder(deinterlvd_spa,H);
-
+bfd_spa=bit_flipping_decoder(deinterlvd_spa,H);
+bfd_sig=bit_flipping_decoder(deinterlvd_sig,H);
 %demodulated_signal=demodulator_qam(re_signal_cons,signal_size);
-decoded_spa= decode(deinterlvd_spa,n,k,'linear/binary',G);
-decoded_sig= decode(deinterlvd_sig,n,k,'linear/binary',G);
+decoded_spa= decode(bfd_spa,n,k,'linear/binary',G);
+decoded_sig= decode(bfd_sig,n,k,'linear/binary',G);
 recovered_seq=jointer(decoded_spa,decoded_sig,spatial_size,1);
 
 %% bit-error check
@@ -117,4 +122,4 @@ end
 %error_rate_avg=mean(error_rate,2);
 %plot
 %semilogy([0:8],error_rate_avg)
-semilogy([0:2:10], error_rate)
+%semilogy([0:2:10], error_rate(1:6))

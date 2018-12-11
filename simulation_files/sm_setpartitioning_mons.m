@@ -25,7 +25,7 @@ for i=1:length(kk_value)
 end
 %%
 %parpool(6)
- parfor j=1:6
+ parfor j=7:9
      ro=(j-1)*2;
      bit_error_count=0;
      for kk=1:kk_value(j)
@@ -117,7 +117,7 @@ for i=1:length(kk_value)
 end
 %%
 %parpool(6)
- parfor j=1:6
+ parfor j=7:9
      ro=(j-1)*2;
      bit_error_count=0;
      for kk=1:kk_value(j)
@@ -209,7 +209,7 @@ for i=1:length(kk_value)
 end
 %%
 %parpool(6)
- parfor j=1:6
+ parfor j=7:9
      ro=(j-1)*2;
      bit_error_count=0;
      for kk=1:kk_value(j)
